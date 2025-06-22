@@ -113,6 +113,61 @@ public class ProductRepositoryImpl implements ProductRepository {
 
     @Override
     public List<Product> findByCriteria(ProductSearchCriteria criteria) {
-        return null;
+        StringBuilder query = new StringBuilder("SELECT * FROM product WHERE 1=1");
+
+        List<Object> params = new ArrayList<>();
+
+        if (criteria.getName() != null) {
+            query.append(" AND name ILIKE ?");
+            params.add("%" + criteria.getName() + "%");
+        }
+
+        if (criteria.getCategory() != null) {
+            query.append(" AND id_category = ?");
+            params.add(criteria.getCategory().getId());
+        }
+
+        if (criteria.getLowerLimit() != null) {
+            query.append(" AND price >= ?");
+            params.add(criteria.getLowerLimit());
+        }
+
+        if (criteria.getUpperLimit() != null) {
+            query.append(" AND price <= ?");
+            params.add(criteria.getUpperLimit());
+        }
+
+        if (criteria.getPage() != null) {
+            query.append(" LIMIT ?");
+            params.add(criteria.getPage());
+        }
+
+        if (criteria.getPageSize() != null) {
+            query.append(" OFFSET ?");
+            params.add(criteria.getPageSize());
+        }
+
+        try(Connection connection = DbConnection.getConnection()) {
+
+
+            List<Product> res = new ArrayList<>();
+            PreparedStatement stmt = connection.prepareStatement(query.toString());
+
+            for (int i = 0; i < params.size(); i++) {
+                stmt.setObject(i + 1, params.get(i));
+            }
+
+            ResultSet rs = stmt.executeQuery();
+
+            while(rs.next())
+            {
+                res.add(extractProductFromResultSet(rs));
+            }
+            return res;
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 }
