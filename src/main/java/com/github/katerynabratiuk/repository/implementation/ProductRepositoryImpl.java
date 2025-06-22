@@ -69,11 +69,14 @@ public class ProductRepositoryImpl implements ProductRepository {
     public Product get(Integer productId) {
         try(Connection connection = DbConnection.getConnection()) {
 
-            PreparedStatement pst = connection.prepareStatement("SELECT FROM product WHERE id_product=?");
+            PreparedStatement pst = connection.prepareStatement("SELECT * FROM product WHERE id_product=?");
             pst.setInt(1, productId);
             ResultSet rs = pst.executeQuery();
-
-            return extractProductFromResultSet(rs);
+            if (rs.next()) {
+                return extractProductFromResultSet(rs);
+            } else {
+                return null;
+            }
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -85,7 +88,7 @@ public class ProductRepositoryImpl implements ProductRepository {
 
         try (Connection connection = DbConnection.getConnection()) {
             Statement st = connection.createStatement();
-            ResultSet resultSet = st.executeQuery("SELECT * FROM Product");
+            ResultSet resultSet = st.executeQuery("SELECT * FROM product");
 
             List<Product> res = new ArrayList<>();
 
@@ -147,15 +150,19 @@ public class ProductRepositoryImpl implements ProductRepository {
             params.add(criteria.getPageSize());
         }
 
+        System.out.println(query);
+
         try(Connection connection = DbConnection.getConnection()) {
 
 
             List<Product> res = new ArrayList<>();
             PreparedStatement stmt = connection.prepareStatement(query.toString());
 
+
             for (int i = 0; i < params.size(); i++) {
                 stmt.setObject(i + 1, params.get(i));
             }
+            System.out.println(stmt);
 
             ResultSet rs = stmt.executeQuery();
 
